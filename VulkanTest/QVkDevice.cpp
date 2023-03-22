@@ -55,5 +55,5 @@ bool QVkDevice::setupPhysicalDevice(std::vector<VkPhysicalDevice>& phyDevs, std:
 	std::cerr << "Graphics " << selectedQueueFamilies.graphicsQueueFamilyIndex << std::endl
 		<< "Compute " << selectedQueueFamilies.computeQueueFamiliyIndex << std::endl
 		<< "Transfer " << selectedQueueFamilies.transferQueueFamiliyIndex << std::endl;
-
+	return true;
 }
