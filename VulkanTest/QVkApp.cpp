@@ -40,6 +40,17 @@ bool QVkApp::checkValidationLayerSupport() {
 	return true;
 }
 
+std::vector<const char*> QVkApp::getRequiredExtensions() {
+	uint32_t glfwExtensionCount = 0;
+	const char** glfwExtensions;
+	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+	if (enableValidationLayers) {
+		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
+	return extensions;
+}
+
 VkResult QVkApp::createInstance() {
 
 	VkResult result = VK_SUCCESS;
@@ -59,16 +70,17 @@ VkResult QVkApp::createInstance() {
 	instanceInfo.pApplicationInfo = &appInfo;
 	instanceInfo.enabledLayerCount = 0;
 	instanceInfo.ppEnabledLayerNames = nullptr;
-	/*if (enableValidationLayers) {
+	if (enableValidationLayers) {
 		if (checkValidationLayerSupport()) {
 			instanceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-			instanceInfo.ppEnabledExtensionNames = validationLayers.data();
+			instanceInfo.ppEnabledLayerNames = validationLayers.data();
 		}
-	}*/
-	instanceInfo.enabledExtensionCount = 0;
-	instanceInfo.ppEnabledExtensionNames = nullptr;
+	}
+	auto extensions = getRequiredExtensions();
+	instanceInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+	instanceInfo.ppEnabledExtensionNames = extensions.data();
 
-	result = vkCreateInstance(&instanceInfo, nullptr, &this->instance);
+  	result = vkCreateInstance(&instanceInfo, nullptr, &this->instance);
 
 	if (result != VK_SUCCESS)
 		return result;

@@ -31,6 +31,7 @@ namespace QVk {
 		bool initWindow();
 		VkResult initVulkan();
 		bool checkValidationLayerSupport();
+		std::vector<const char*> getRequiredExtensions();
 		VkResult createInstance();
 		void cleanupVulkan();
 	public:
