@@ -17,9 +17,9 @@ VkResult QVkApp::createInstance() {
 
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pNext = nullptr;
-	appInfo.applicationVersion = QEDEMON_APP_VERSION;
+	appInfo.applicationVersion = VK_MAKE_API_VERSION(1, QEDEMON_APP_VERSION_MAYJOR, QEDEMON_APP_VERSION_MINOR, 0);
 	appInfo.pApplicationName = QEDEMON_APP_NAME;
-	appInfo.engineVersion = QEDEMON_ENGINE_VERSION;
+	appInfo.engineVersion = VK_MAKE_API_VERSION(1, QEDEMON_ENGINE_VERSION_MAYJOR, QEDEMON_ENGINE_VERSION_MINOR, 0);
 	appInfo.pEngineName = QEDEMON_ENGINE_NAME;
 	appInfo.apiVersion = VK_MAKE_API_VERSION(1, QEDEMON_API_VERSION_MAYJOR, QEDEMON_API_VERSION_MINOR, 0);
 
