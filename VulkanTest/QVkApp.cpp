@@ -8,6 +8,15 @@ using namespace QVk;
 
 QVkApp::QVkApp() : device() {
 	this->instance = VK_NULL_HANDLE;
+	this->window = nullptr;
+}
+
+bool QVkApp::initWindow() {
+	glfwInit();
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	this->window = glfwCreateWindow(WIDTH, HEIGHT, QEDEMON_APP_NAME, nullptr, nullptr);
+	return true;
 }
 
 VkResult QVkApp::createInstance() {
@@ -55,7 +64,7 @@ VkResult QVkApp::createInstance() {
 }
 
 
-VkResult QVkApp::init() {
+VkResult QVkApp::initVulkan() {
 	VkResult result=VK_SUCCESS;
 	result = createInstance();
 	if (result != VK_SUCCESS) {
@@ -69,7 +78,7 @@ VkResult QVkApp::init() {
 		VkPhysicalDeviceMemoryProperties phyDevMemProp;
 		vkGetPhysicalDeviceMemoryProperties(*iter, &phyDevMemProp);
 		std::cout << "Memory types" << std::endl;
-		for (int j = 0; j < phyDevMemProp.memoryTypeCount; j++) {
+		for (size_t j = 0; j < phyDevMemProp.memoryTypeCount; j++) {
 			std::cerr << j << " : "
 				<< phyDevMemProp.memoryTypes[j].propertyFlags << std::endl
 				<< BIT_CHECK(phyDevMemProp.memoryTypes[j].propertyFlags, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT)
@@ -87,6 +96,22 @@ VkResult QVkApp::init() {
 	return result;
 }
 
-void QVkApp::destroy() {
+void QVkApp::cleanupVulkan() {
 	vkDestroyInstance(this->instance, nullptr);
+}
+
+void QVkApp::init() {
+	initWindow();
+	initVulkan();
+}
+
+void QVkApp::mainLoop() {
+	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
+	}
+}
+
+void QVkApp::destroy() {
+	cleanupVulkan();
+	glfwTerminate();
 }
