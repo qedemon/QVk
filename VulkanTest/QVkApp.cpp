@@ -19,7 +19,29 @@ bool QVkApp::initWindow() {
 	return true;
 }
 
+bool QVkApp::checkValidationLayerSupport() {
+
+	uint32_t layerCount;
+	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+	std::vector<VkLayerProperties> layers(layerCount);
+	vkEnumerateInstanceLayerProperties(&layerCount, layers.data());
+
+	for (const auto& requiredLayer : validationLayers) {
+		bool found = false;
+		for (const auto& layer : layers) {
+			if (strcmp(requiredLayer, layer.layerName) == 0) {
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			return false;
+	}
+	return true;
+}
+
 VkResult QVkApp::createInstance() {
+
 	VkResult result = VK_SUCCESS;
 	VkApplicationInfo appInfo = {};
 	VkInstanceCreateInfo instanceInfo = {};
@@ -37,6 +59,12 @@ VkResult QVkApp::createInstance() {
 	instanceInfo.pApplicationInfo = &appInfo;
 	instanceInfo.enabledLayerCount = 0;
 	instanceInfo.ppEnabledLayerNames = nullptr;
+	/*if (enableValidationLayers) {
+		if (checkValidationLayerSupport()) {
+			instanceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			instanceInfo.ppEnabledExtensionNames = validationLayers.data();
+		}
+	}*/
 	instanceInfo.enabledExtensionCount = 0;
 	instanceInfo.ppEnabledExtensionNames = nullptr;
 
