@@ -17,6 +17,5 @@ namespace QVk {
 	public:
 		QVkDevice();
 		bool setupPhysicalDevice(std::vector<VkPhysicalDevice> &phyDevs, std::vector<VkPhysicalDeviceProperties> &phyDevProps);
-		VkResult createDevice();
 	};
 }
