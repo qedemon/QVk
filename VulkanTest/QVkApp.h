@@ -1,6 +1,9 @@
 #pragma once
+#define VK_USE_PLATFORM_WIN32_KHR
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#define GLFW_EXPOSE_NATIVE_WIN32
+#include <GLFW/glfw3native.h>
 #include <vector>
 #include "QVkDevice.h"
 
@@ -22,6 +25,7 @@ namespace QVk {
 #endif
 
 		VkInstance instance;
+		VkDebugUtilsMessengerEXT debugMessenger;
 		std::vector<VkPhysicalDevice> physicalDevices;
 		std::vector<VkPhysicalDeviceProperties> physicalDeviceProperties;
 		
@@ -31,8 +35,10 @@ namespace QVk {
 		bool initWindow();
 		VkResult initVulkan();
 		bool checkValidationLayerSupport();
+		static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
 		std::vector<const char*> getRequiredExtensions();
 		VkResult createInstance();
+		void setupDebugMessenger();
 		void cleanupVulkan();
 	public:
 		QVkApp();
