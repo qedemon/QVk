@@ -185,7 +185,10 @@ VkResult QVkApp::initVulkan() {
 
 	VkPhysicalDeviceFeatures requiredFeatures = {};
 	requiredFeatures.geometryShader = VK_TRUE;
-	this->device.setupPhysicalDevice(physicalDevices, physicalDeviceProperties, requiredFeatures, std::vector<const char*>(), enableValidationLayers ? validationLayers : std::vector<const char*>());
+	const std::vector<const char*> requiredExtensions = {
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
+	this->device.setupPhysicalDevice(physicalDevices, physicalDeviceProperties, requiredFeatures, requiredExtensions, enableValidationLayers ? validationLayers : std::vector<const char*>());
 	this->device.createDevice();
 
 	return result;
