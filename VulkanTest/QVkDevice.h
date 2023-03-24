@@ -12,6 +12,10 @@ namespace QVk {
 
 	class QVkDevice {
 	private:
+		VkPhysicalDeviceFeatures deviceFeatures;
+		std::vector<const char*> deviceExtensions;
+		std::vector<const char*> deviceLayers;
+		
 		VkDevice device;
 		VkPhysicalDevice physicalDevice;
 		QVkQueueFamilies selectedQueueFamilies;
@@ -19,8 +23,8 @@ namespace QVk {
 		VkQueue graphicsQueue;
 	public:
 		QVkDevice();
-		bool setupPhysicalDevice(std::vector<VkPhysicalDevice> &phyDevs, std::vector<VkPhysicalDeviceProperties> &phyDevProps);
-		VkResult createDevice(VkPhysicalDeviceFeatures deviceFeatures, const std::vector<const char*>& requiredExtensions, const std::vector<const char*>& requiredLayers);
+		bool setupPhysicalDevice(std::vector<VkPhysicalDevice> &phyDevs, std::vector<VkPhysicalDeviceProperties> &phyDevProps, VkPhysicalDeviceFeatures requiredDeviceFeatures, const std::vector<const char*>& requiredExtensions, const std::vector<const char*>& requiredLayers);
+		VkResult createDevice();
 		void destroyDevice();
 	};
 }

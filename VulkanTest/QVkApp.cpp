@@ -183,8 +183,10 @@ VkResult QVkApp::initVulkan() {
 		i++;
 	}
 
-	this->device.setupPhysicalDevice(physicalDevices, physicalDeviceProperties);
-	this->device.createDevice({}, std::vector<const char*>(), enableValidationLayers?validationLayers:std::vector<const char*>());
+	VkPhysicalDeviceFeatures requiredFeatures = {};
+	requiredFeatures.geometryShader = VK_TRUE;
+	this->device.setupPhysicalDevice(physicalDevices, physicalDeviceProperties, requiredFeatures, std::vector<const char*>(), enableValidationLayers ? validationLayers : std::vector<const char*>());
+	this->device.createDevice();
 
 	return result;
 }
