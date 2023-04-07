@@ -12,8 +12,10 @@ namespace QVk {
 		VkDeviceMemory deviceMemory;
 	public:
 		QVkMemory(VkDevice logicalDevice, VkPhysicalDevice physicalDevice);
+		~QVkMemory();
 		bool selectMemoryTypeAndHeap(const std::vector<VkMemoryPropertyFlagBits>& whiteList, const std::vector<VkMemoryPropertyFlagBits>& blackList);
 		VkResult allocateMemory(VkDeviceSize allocationSize);
+		void freeMemory();
 	};
 }
 
