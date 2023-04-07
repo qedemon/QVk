@@ -16,6 +16,7 @@ namespace QVk {
 		bool selectMemoryTypeAndHeap(const std::vector<VkMemoryPropertyFlagBits>& whiteList, const std::vector<VkMemoryPropertyFlagBits>& blackList);
 		VkResult allocateMemory(VkDeviceSize allocationSize);
 		void freeMemory();
+		void* mapMemory(VkDeviceSize offset, VkDeviceSize size);
 	};
 }
 
