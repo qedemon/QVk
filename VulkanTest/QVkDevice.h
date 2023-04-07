@@ -21,6 +21,8 @@ namespace QVk {
 		QVkQueueFamilies selectedQueueFamilies;
 
 		VkQueue graphicsQueue;
+		VkQueue computeQueue;
+		VkQueue transferQueue;
 	public:
 		QVkDevice();
 		bool setupPhysicalDevice(std::vector<VkPhysicalDevice> &phyDevs, std::vector<VkPhysicalDeviceProperties> &phyDevProps, VkPhysicalDeviceFeatures requiredDeviceFeatures, const std::vector<const char*>& requiredExtensions, const std::vector<const char*>& requiredLayers);

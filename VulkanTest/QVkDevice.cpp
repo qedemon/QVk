@@ -1,5 +1,6 @@
 #include "QVkDevice.h"
 #include <iostream>
+#include <map>
 using namespace QVk;
 
 QVkDevice::QVkDevice() {
@@ -124,15 +125,39 @@ bool QVkDevice::setupPhysicalDevice(std::vector<VkPhysicalDevice>& phyDevs, std:
 	return true;
 }
 
+static void countPerQueueFailiyindices(std::map<uint32_t, uint32_t> &queueFamilies, uint32_t queueFamiliindex) {
+	auto queueFamilyIndex = queueFamilies.find(queueFamiliindex);
+	if (queueFamilyIndex == queueFamilies.end()) {
+		queueFamilies.insert(std::pair(queueFamiliindex, (uint32_t)1));
+	}
+	else {
+		queueFamilyIndex->second++;
+	}
+}
+
 VkResult QVkDevice::createDevice() {
-	VkDeviceQueueCreateInfo queueInfo = {};
-	queueInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queueInfo.pNext = nullptr;
-	queueInfo.queueFamilyIndex = selectedQueueFamilies.graphicsQueueFamilyIndex.value();
-	queueInfo.queueCount = 1;
-	float queuePriority = 1.0f;
-	queueInfo.pQueuePriorities = &queuePriority;
+	std::vector<VkDeviceQueueCreateInfo> queueInfos;
+	std::map<uint32_t, uint32_t> queueFamilies;
+	std::vector<float> priorities;
 	
+	if (selectedQueueFamilies.graphicsQueueFamilyIndex.has_value())
+		countPerQueueFailiyindices(queueFamilies, selectedQueueFamilies.graphicsQueueFamilyIndex.value());
+	if(selectedQueueFamilies.computeQueueFamiliyIndex.has_value())
+		countPerQueueFailiyindices(queueFamilies, selectedQueueFamilies.computeQueueFamiliyIndex.value());
+	if (selectedQueueFamilies.transferQueueFamiliyIndex.has_value())
+		countPerQueueFailiyindices(queueFamilies, selectedQueueFamilies.transferQueueFamiliyIndex.value());
+
+	for (auto queueFamilyIndexCount : queueFamilies) {
+		VkDeviceQueueCreateInfo queueCreateInfo = {};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamilyIndexCount.first;
+		queueCreateInfo.queueCount = 1;
+		for (size_t i = 0; i < queueCreateInfo.queueCount; i++)
+			priorities.push_back(1.0f);
+		queueCreateInfo.pQueuePriorities = &priorities.back();
+		queueInfos.push_back(queueCreateInfo);
+	}
+
 	VkDeviceCreateInfo deviceInfo = {};
 	deviceInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 	deviceInfo.pNext = nullptr;
@@ -141,14 +166,18 @@ VkResult QVkDevice::createDevice() {
 	deviceInfo.ppEnabledExtensionNames = deviceExtensions.data();
 	deviceInfo.enabledLayerCount = static_cast<uint32_t>(deviceLayers.size());
 	deviceInfo.ppEnabledLayerNames = deviceLayers.data();
-	deviceInfo.queueCreateInfoCount = 1;
-	deviceInfo.pQueueCreateInfos = &queueInfo;
+	deviceInfo.queueCreateInfoCount = static_cast<uint32_t>(queueInfos.size());
+	deviceInfo.pQueueCreateInfos = queueInfos.data();
 
 	if (vkCreateDevice(physicalDevice, &deviceInfo, nullptr, &device) != VK_SUCCESS) {
 		throw std::runtime_error("create logical device failed.");
 	}
 
 	vkGetDeviceQueue(device, selectedQueueFamilies.graphicsQueueFamilyIndex.value(), 0, &graphicsQueue);
+	if(selectedQueueFamilies.computeQueueFamiliyIndex.has_value())
+		vkGetDeviceQueue(device, selectedQueueFamilies.computeQueueFamiliyIndex.value(), 0, &computeQueue);
+	if(selectedQueueFamilies.transferQueueFamiliyIndex.has_value())
+		vkGetDeviceQueue(device, selectedQueueFamilies.transferQueueFamiliyIndex.value(), 0, &transferQueue);
 
 	return VK_SUCCESS;
 }
