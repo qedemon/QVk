@@ -28,5 +28,7 @@ namespace QVk {
 		bool setupPhysicalDevice(std::vector<VkPhysicalDevice> &phyDevs, std::vector<VkPhysicalDeviceProperties> &phyDevProps, VkPhysicalDeviceFeatures requiredDeviceFeatures, const std::vector<const char*>& requiredExtensions, const std::vector<const char*>& requiredLayers);
 		VkResult createDevice();
 		void destroyDevice();
+		inline VkPhysicalDevice getPhysicalDevice() { return this->physicalDevice; }
+		inline VkDevice getLogicalDevice() { return this->device; }
 	};
 }

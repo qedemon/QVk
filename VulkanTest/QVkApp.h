@@ -6,6 +6,7 @@
 #include <GLFW/glfw3native.h>
 #include <vector>
 #include "QVkDevice.h"
+#include "QVkMemoryManager.h"
 
 namespace QVk {
 
@@ -30,6 +31,7 @@ namespace QVk {
 		std::vector<VkPhysicalDeviceProperties> physicalDeviceProperties;
 		
 		QVkDevice device;
+		QVkMemoryManager* pDeviceMemory;
 
 	private:
 		bool initWindow();

@@ -164,6 +164,7 @@ VkResult QVkApp::initVulkan() {
 	}
 	setupDebugMessenger();
 
+#ifdef _DEBUG
 	int i = 0;
 	for (auto iter = this->physicalDevices.begin(); iter != this->physicalDevices.end(); ++iter) {
 		std::cout << this->physicalDeviceProperties[i].deviceName << std::endl;
@@ -182,6 +183,7 @@ VkResult QVkApp::initVulkan() {
 		}
 		i++;
 	}
+#endif
 
 	VkPhysicalDeviceFeatures requiredFeatures = {};
 	requiredFeatures.geometryShader = VK_TRUE;
@@ -191,10 +193,14 @@ VkResult QVkApp::initVulkan() {
 	this->device.setupPhysicalDevice(physicalDevices, physicalDeviceProperties, requiredFeatures, requiredExtensions, enableValidationLayers ? validationLayers : std::vector<const char*>());
 	this->device.createDevice();
 
+	pDeviceMemory = new QVkMemoryManager(this->device.getLogicalDevice(), this->device.getPhysicalDevice(), 0);
+	pDeviceMemory->allocateMemory(1<<10 + 1);
+	pDeviceMemory->allocateMemory( 1);
 	return result;
 }
 
 void QVkApp::cleanupVulkan() {
+	delete pDeviceMemory;
 	this->device.destroyDevice();
 	DestroyDebugUtilsMessagerEXT(this->instance, this->debugMessenger, nullptr);
 	vkDestroyInstance(this->instance, nullptr);
