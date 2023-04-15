@@ -38,6 +38,7 @@ QVkMemory::~QVkMemory() {
 	return true;
 }
 */
+
 VkResult QVkMemory::allocateMemory(uint32_t memoryTypeIndex, VkDeviceSize allocateSize) {
 
 	VkMemoryAllocateInfo allocateInfo = {};

@@ -11,11 +11,11 @@ QVkMemoryManager::QVkMemoryManager(VkDevice logicalDevice, VkPhysicalDevice phys
 
 	this->allocatedSize = DEVICE_MEMORY_SIZE;
 	this->minBlockSize = DEVICE_MEMORY_BLOCK_SIZE;
-	uint32_t minBlockCount = allocatedSize / minBlockSize-((allocatedSize%minBlockSize==0)?0:1);
+	MEMORY_BLOCK_INDEX minBlockCount = allocatedSize / minBlockSize-((allocatedSize%minBlockSize==0)?0:1);
 	for (blockLevel = 0; (minBlockCount >> blockLevel) != 0; blockLevel++);
 	this->maxBlockSize = minBlockSize << (blockLevel - 1);
 	uint32_t totalWordCount = 0;
-	uint32_t blockCount = minBlockCount;
+	MEMORY_BLOCK_INDEX blockCount = minBlockCount;
 	for (uint32_t level = 0; level < blockLevel; level++) {
 		wordOffsetsPerLevel.push_back(totalWordCount);
 		totalWordCount += blockCount / sizeof(decltype(bitMasks.front())) / 8 + ((blockCount % (sizeof(decltype(bitMasks.front())) * 8) > 0) ? 1 : 0);
@@ -28,7 +28,7 @@ QVkMemoryManager::QVkMemoryManager(VkDevice logicalDevice, VkPhysicalDevice phys
 		bitMask = 0;
 	}
 
-	uint32_t sizePerLevel = minBlockCount;
+	MEMORY_BLOCK_INDEX sizePerLevel = minBlockCount;
 	for (uint32_t level = 0; level < blockLevel; level++) {
 		if (sizePerLevel % 2 == 1) {
 			setBit(level, sizePerLevel - 1);
@@ -46,6 +46,74 @@ VkDeviceSize QVkMemoryManager::allocateMemory(VkDeviceSize allocateSize) {
 	}
 	uint32_t level;
 	for (level = 0; allocateSize > (minBlockSize << (size_t)level); level++);
+	uint32_t blockIndex;
+	try {
+		blockIndex = __allocateBlock(level);
+	}
+	catch (std::exception e) {
+		throw e;
+	}
+	return blockIndex*minBlockSize;
+}
+
+VkDeviceSize QVkMemoryManager::allocateAlignedMemory(VkDeviceSize allocateSize, uint32_t align) {
+	if (allocateSize > maxBlockSize) {
+		throw std::exception("QVkMemoryManager::allocateAlignedMemory error : allocateSize > maxBlock Size");
+	}
+	uint32_t level;
+	level = 0;
+	while (level < blockLevel) {
+		uint32_t blockSize = minBlockSize << level;
+		if ((blockSize >= allocateSize) && (blockSize >= align))
+			break;
+		level++;
+	}
+	if (level == blockLevel) {
+		throw std::exception("QVkMemoryManager::allocateAlignedMemory error : cannot find block level");
+	}
+
+	uint32_t blockIndex;
+	try {
+		blockIndex = __allocateBlock(level);
+	}
+	catch (std::exception e) {
+		throw e;
+	}
+	VkDeviceSize memoryOffset = blockIndex * (VkDeviceSize)minBlockSize;
+	VkDeviceSize remain = memoryOffset % align;
+	if (remain != 0)
+		memoryOffset += (align - memoryOffset % align);
+	return memoryOffset;
+}
+
+void QVkMemoryManager::freeMemory(VkDeviceSize memoryOffset) {
+	MEMORY_BLOCK_INDEX blockOffset = (MEMORY_BLOCK_INDEX)(memoryOffset / minBlockSize);
+	__freeBlock(blockOffset);
+}
+
+void QVkMemoryManager::setBit(uint32_t level, MEMORY_BLOCK_INDEX index) {
+	const uint32_t WORD_SIZE = sizeof(decltype(bitMasks.front())) * 8;
+	uint32_t wordOffset = index / WORD_SIZE;
+	uint32_t bitOffset = index % WORD_SIZE;
+	bitMasks[wordOffsetsPerLevel[level] + wordOffset] |= (1 << bitOffset);
+}
+
+void QVkMemoryManager::resetBit(uint32_t level, MEMORY_BLOCK_INDEX index) {
+	const uint32_t WORD_SIZE = sizeof(decltype(bitMasks.front())) * 8;
+	uint32_t wordOffset = index / WORD_SIZE;
+	uint32_t bitOffset = index % WORD_SIZE;
+	bitMasks[wordOffsetsPerLevel[level] + wordOffset] &= ~(1 << bitOffset);
+}
+
+bool QVkMemoryManager::getBit(uint32_t level, MEMORY_BLOCK_INDEX index) {
+	const uint32_t WORD_SIZE = sizeof(decltype(bitMasks.front())) * 8;
+	uint32_t wordOffset = index / WORD_SIZE;
+	uint32_t bitOffset = index % WORD_SIZE;
+	return (bitMasks[wordOffsetsPerLevel[level] + wordOffset] >> bitOffset) & 1;
+}
+
+MEMORY_BLOCK_INDEX QVkMemoryManager::__allocateBlock(uint32_t level) {
+
 	uint32_t selectedBlockIndex;
 	if (level == blockLevel - 1) {
 		if (getBit(blockLevel, 0) == false) {
@@ -53,7 +121,8 @@ VkDeviceSize QVkMemoryManager::allocateMemory(VkDeviceSize allocateSize) {
 		}
 		selectedBlockIndex = 0;
 	}
-	uint32_t currentLevel, offset=0;
+	uint32_t currentLevel;
+	MEMORY_BLOCK_INDEX offset = 0;
 	for (currentLevel = level; currentLevel < blockLevel; currentLevel++) {
 		bool found = false;
 		for (auto wordOffset = wordOffsetsPerLevel[currentLevel]; wordOffset < wordOffsetsPerLevel[currentLevel + 1]; wordOffset++) {
@@ -78,24 +147,23 @@ VkDeviceSize QVkMemoryManager::allocateMemory(VkDeviceSize allocateSize) {
 	while (currentLevel > level) {
 		currentLevel--;
 		offset = (offset << 1);
-		setBit(currentLevel, offset+1);
+		setBit(currentLevel, offset + 1);
 	}
 	resetBit(currentLevel, offset);
-	return ((1 << level) + offset)*minBlockSize;
+	return (((MEMORY_BLOCK_INDEX)1 << level) + offset);
 }
 
-void QVkMemoryManager::freeMemory(VkDeviceSize memoryOffset) {
+void QVkMemoryManager::__freeBlock(uint32_t blockOffset) {
 	uint32_t currentLevel = 0;
-	uint32_t blockOffset = memoryOffset / minBlockSize;
 	for (currentLevel = 0; currentLevel < blockLevel; currentLevel++) {
 		if (blockOffset & 1) {
-			if (!getBit(currentLevel, blockOffset-1)) {
+			if (!getBit(currentLevel, blockOffset - 1)) {
 				setBit(currentLevel, blockOffset);
 				break;
 			}
 			resetBit(currentLevel, blockOffset - 1);
 		}
-		else{
+		else {
 			if (!getBit(currentLevel, blockOffset + 1)) {
 				setBit(currentLevel, blockOffset);
 				break;
@@ -108,25 +176,4 @@ void QVkMemoryManager::freeMemory(VkDeviceSize memoryOffset) {
 			break;
 		}
 	}
-}
-
-void QVkMemoryManager::setBit(uint32_t level, uint32_t index) {
-	const uint32_t WORD_SIZE = sizeof(decltype(bitMasks.front())) * 8;
-	uint32_t wordOffset = index / WORD_SIZE;
-	uint32_t bitOffset = index % WORD_SIZE;
-	bitMasks[wordOffsetsPerLevel[level] + wordOffset] |= (1 << bitOffset);
-}
-
-void QVkMemoryManager::resetBit(uint32_t level, uint32_t index) {
-	const uint32_t WORD_SIZE = sizeof(decltype(bitMasks.front())) * 8;
-	uint32_t wordOffset = index / WORD_SIZE;
-	uint32_t bitOffset = index % WORD_SIZE;
-	bitMasks[wordOffsetsPerLevel[level] + wordOffset] &= ~(1 << bitOffset);
-}
-
-bool QVkMemoryManager::getBit(uint32_t level, uint32_t index) {
-	const uint32_t WORD_SIZE = sizeof(decltype(bitMasks.front())) * 8;
-	uint32_t wordOffset = index / WORD_SIZE;
-	uint32_t bitOffset = index % WORD_SIZE;
-	return (bitMasks[wordOffsetsPerLevel[level] + wordOffset] >> bitOffset) & 1;
 }

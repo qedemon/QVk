@@ -194,7 +194,7 @@ VkResult QVkApp::initVulkan() {
 	this->device.createDevice();
 
 	pDeviceMemory = new QVkMemoryManager(this->device.getLogicalDevice(), this->device.getPhysicalDevice(), 0);
-	pDeviceMemory->allocateMemory(1<<10 + 1);
+	pDeviceMemory->allocateMemory((1<<10) + 1);
 	pDeviceMemory->allocateMemory( 1);
 	return result;
 }
