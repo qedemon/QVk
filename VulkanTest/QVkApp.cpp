@@ -8,6 +8,7 @@ using namespace QVk;
 
 QVkApp::QVkApp() : device() {
 	this->instance = VK_NULL_HANDLE;
+	this->debugMessenger = VK_NULL_HANDLE;
 	this->window = nullptr;
 }
 
@@ -19,7 +20,60 @@ bool QVkApp::initWindow() {
 	return true;
 }
 
+bool QVkApp::checkValidationLayerSupport() {
+
+	uint32_t layerCount;
+	vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+	std::vector<VkLayerProperties> layers(layerCount);
+	vkEnumerateInstanceLayerProperties(&layerCount, layers.data());
+
+	for (const auto& requiredLayer : validationLayers) {
+		bool found = false;
+		for (const auto& layer : layers) {
+			if (strcmp(requiredLayer, layer.layerName) == 0) {
+				found = true;
+				break;
+			}
+		}
+		if (!found)
+			return false;
+	}
+	return true;
+}
+
+
+VKAPI_ATTR VkBool32 VKAPI_CALL QVkApp::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+	if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+		std::cerr << "validation layer: ";
+		switch (messageSeverity) {
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+			std::cerr << "[INFO] ";
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+			std::cerr << "[WARNING] ";
+			break;
+		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+			std::cerr << "[ERROR] ";
+			break;
+		}
+		std::cerr<< pCallbackData->pMessage << std::endl;
+	}
+	return VK_FALSE;
+}
+
+std::vector<const char*> QVkApp::getRequiredExtensions() {
+	uint32_t glfwExtensionCount = 0;
+	const char** glfwExtensions;
+	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+	if (enableValidationLayers) {
+		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
+	return extensions;
+}
+
 VkResult QVkApp::createInstance() {
+
 	VkResult result = VK_SUCCESS;
 	VkApplicationInfo appInfo = {};
 	VkInstanceCreateInfo instanceInfo = {};
@@ -37,10 +91,17 @@ VkResult QVkApp::createInstance() {
 	instanceInfo.pApplicationInfo = &appInfo;
 	instanceInfo.enabledLayerCount = 0;
 	instanceInfo.ppEnabledLayerNames = nullptr;
-	instanceInfo.enabledExtensionCount = 0;
-	instanceInfo.ppEnabledExtensionNames = nullptr;
+	if (enableValidationLayers) {
+		if (checkValidationLayerSupport()) {
+			instanceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+			instanceInfo.ppEnabledLayerNames = validationLayers.data();
+		}
+	}
+	auto extensions = getRequiredExtensions();
+	instanceInfo.enabledExtensionCount = static_cast<uint32_t>(extensions.size());
+	instanceInfo.ppEnabledExtensionNames = extensions.data();
 
-	result = vkCreateInstance(&instanceInfo, nullptr, &this->instance);
+  	result = vkCreateInstance(&instanceInfo, nullptr, &this->instance);
 
 	if (result != VK_SUCCESS)
 		return result;
@@ -48,8 +109,7 @@ VkResult QVkApp::createInstance() {
 	uint32_t physicalDeviceCount;
 	result = vkEnumeratePhysicalDevices(this->instance, &physicalDeviceCount, nullptr);
 	if (physicalDeviceCount <= 0) {
-		std::cerr << "There is no physical device in Vulkan instance." << std::endl;
-		return result;
+		throw("There is no physical device in Vulkan instance.");
 	}
 	this->physicalDevices.resize(physicalDeviceCount);
 	this->physicalDeviceProperties.resize(physicalDeviceCount);
@@ -63,15 +123,48 @@ VkResult QVkApp::createInstance() {
 	return result;
 }
 
+static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo, const VkAllocationCallbacks* pAllocator, VkDebugUtilsMessengerEXT* pDebugMessenger) {
+	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+	if (func != nullptr) {
+		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+	}
+	else {
+		return VK_ERROR_EXTENSION_NOT_PRESENT;
+	}
+}
+
+static void DestroyDebugUtilsMessagerEXT(VkInstance instance, VkDebugUtilsMessengerEXT messenger, const VkAllocationCallbacks* pAllocator) {
+	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+	if (func != nullptr) {
+		return func(instance, messenger, pAllocator);
+	}
+}
+
+void QVkApp::setupDebugMessenger() {
+	if (!enableValidationLayers)
+		return;
+	VkDebugUtilsMessengerCreateInfoEXT debugMessengerInfo = {};
+	debugMessengerInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+	debugMessengerInfo.pNext = nullptr;
+	debugMessengerInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+	debugMessengerInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_DEVICE_ADDRESS_BINDING_BIT_EXT;
+	debugMessengerInfo.pfnUserCallback = QVkApp::debugCallback;
+	debugMessengerInfo.pUserData = nullptr;
+	if (CreateDebugUtilsMessengerEXT(instance, &debugMessengerInfo, nullptr, &debugMessenger) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create instance.");
+	}
+}
+
 
 VkResult QVkApp::initVulkan() {
 	VkResult result=VK_SUCCESS;
 	result = createInstance();
 	if (result != VK_SUCCESS) {
-		std::cerr << "Create Vulkan Instance error" << std::endl;
-		return result;
+		throw std::runtime_error("Create Vulkan Instance error");
 	}
-	
+	setupDebugMessenger();
+
+#ifdef _DEBUG
 	int i = 0;
 	for (auto iter = this->physicalDevices.begin(); iter != this->physicalDevices.end(); ++iter) {
 		std::cout << this->physicalDeviceProperties[i].deviceName << std::endl;
@@ -90,13 +183,26 @@ VkResult QVkApp::initVulkan() {
 		}
 		i++;
 	}
+#endif
 
-	this->device.setupPhysicalDevice(physicalDevices, physicalDeviceProperties);
+	VkPhysicalDeviceFeatures requiredFeatures = {};
+	requiredFeatures.geometryShader = VK_TRUE;
+	const std::vector<const char*> requiredExtensions = {
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+	};
+	this->device.setupPhysicalDevice(physicalDevices, physicalDeviceProperties, requiredFeatures, requiredExtensions, enableValidationLayers ? validationLayers : std::vector<const char*>());
+	this->device.createDevice();
 
+	pDeviceMemory = new QVkMemoryManager(this->device.getLogicalDevice(), this->device.getPhysicalDevice(), 0);
+	pDeviceMemory->allocateMemory((1<<10) + 1);
+	pDeviceMemory->allocateMemory( 1);
 	return result;
 }
 
 void QVkApp::cleanupVulkan() {
+	delete pDeviceMemory;
+	this->device.destroyDevice();
+	DestroyDebugUtilsMessagerEXT(this->instance, this->debugMessenger, nullptr);
 	vkDestroyInstance(this->instance, nullptr);
 }
 
