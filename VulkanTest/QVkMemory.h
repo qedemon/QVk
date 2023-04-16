@@ -21,6 +21,7 @@ namespace QVk {
 		VkResult allocateMemory(uint32_t memoryTypeIndex, VkDeviceSize allocationSize);
 		void freeMemory();
 		void* mapMemory(VkDeviceSize offset, VkDeviceSize size);
+		void unmapMemory();
 		bool flushMemory(VkDeviceSize offset, VkDeviceSize size);
 		bool flushMemory(const std::vector<VkDeviceSize>& offset, const std::vector<VkDeviceSize>& size);
 		bool invalidateMemory(VkDeviceSize offset, VkDeviceSize size);

@@ -86,6 +86,10 @@ void* QVkMemory::mapMemory(VkDeviceSize offset, VkDeviceSize size) {
 	return nullptr;
 }
 
+void QVkMemory::unmapMemory() {
+	vkUnmapMemory(logicalDevice, deviceMemory);
+}
+
 bool QVkMemory::flushMemory(VkDeviceSize offset, VkDeviceSize size) {
 	return flushMemory(std::vector<VkDeviceSize>(offset), std::vector<VkDeviceSize>(size));
 }
