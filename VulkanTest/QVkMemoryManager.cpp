@@ -153,7 +153,7 @@ MEMORY_BLOCK_INDEX QVkMemoryManager::__allocateBlock(uint32_t level) {
 	return (((MEMORY_BLOCK_INDEX)1 << level) + offset);
 }
 
-void QVkMemoryManager::__freeBlock(uint32_t blockOffset) {
+void QVkMemoryManager::__freeBlock(MEMORY_BLOCK_INDEX blockOffset) {
 	uint32_t currentLevel = 0;
 	for (currentLevel = 0; currentLevel < blockLevel; currentLevel++) {
 		if (blockOffset & 1) {
