@@ -137,10 +137,12 @@
     <ClCompile Include="QVkApp.cpp" />
     <ClCompile Include="QVkMemory.cpp" />
     <ClCompile Include="QVkMemoryManager.cpp" />
+    <ClCompile Include="QVkMemoryPool.cpp" />
     <ClInclude Include="QVkApp.h" />
     <ClCompile Include="QVkDevice.cpp" />
     <ClInclude Include="QVkMemory.h" />
     <ClInclude Include="QVkMemoryManager.h" />
+    <ClInclude Include="QVkMemoryPool.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppInfo.h" />
