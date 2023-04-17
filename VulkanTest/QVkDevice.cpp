@@ -1,67 +1,17 @@
 #include "QVkDevice.h"
+#include "QVkDeviceQueue.h"
 #include <iostream>
 #include <map>
 using namespace QVk;
 
 QVkDevice::QVkDevice() {
+	this->instance = VK_NULL_HANDLE;
 	this->device = VK_NULL_HANDLE;
 	this->physicalDevice = VK_NULL_HANDLE;
+	this->deviceFeatures = {};
 }
 
-bool checkDeviceFeature(VkPhysicalDevice physicalDevice, const VkPhysicalDeviceFeatures& requeiredFeature) {
-	VkPhysicalDeviceFeatures supportedFeatures;
-	vkGetPhysicalDeviceFeatures(physicalDevice, &supportedFeatures);
-	for (size_t i = 0; i < sizeof(VkPhysicalDeviceFeatures)/sizeof(VkBool32); i++) {
-		if ((((VkBool32*)&requeiredFeature)[i] == VK_TRUE) && (((VkBool32*)&supportedFeatures)[i] == VK_FALSE)) {
-			return false;
-		}
-	}
-	return true;
-}
-
-bool checkDeviceExtension(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredExtensions) {
-	uint32_t supportedExtensionCount = 0;
-	std::vector<VkExtensionProperties> supportedExtensions;
-	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, nullptr);
-	supportedExtensions.resize(supportedExtensionCount);
-	vkEnumerateDeviceExtensionProperties(physicalDevice, nullptr, &supportedExtensionCount, supportedExtensions.data());
-	for (const auto& requiredExtension : requiredExtensions) {
-		bool found = false;
-		for (const auto& supportedExtension : supportedExtensions) {
-			if (!strcmp(requiredExtension, supportedExtension.extensionName)) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			return false;
-		}
-	}
-	return true;
-}
-
-bool checkDeviceLayer(VkPhysicalDevice physicalDevice, const std::vector<const char*>& requiredLayers) {
-	uint32_t supportedLayerCount = 0;
-	std::vector<VkLayerProperties> supportedLayers;
-	vkEnumerateDeviceLayerProperties(physicalDevice, &supportedLayerCount, nullptr);
-	supportedLayers.resize(supportedLayerCount);
-	vkEnumerateDeviceLayerProperties(physicalDevice, &supportedLayerCount, supportedLayers.data());
-	for (const auto& requiredLayer : requiredLayers) {
-		bool found = false;
-		for (const auto& supportedLayer : supportedLayers) {
-			if (!strcmp(requiredLayer, supportedLayer.layerName)) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			return false;
-		}
-	}
-	return true;
-}
-
-bool QVkDevice::setupPhysicalDevice(std::vector<VkPhysicalDevice>& phyDevs, std::vector<VkPhysicalDeviceProperties>& phyDevProps, VkPhysicalDeviceFeatures requiredDeviceFeatures, const std::vector<const char*>& requiredExtensions, const std::vector<const char*>& requiredLayers) {
+/*bool QVkDevice::setupPhysicalDevice(VkInstance instance, VkPhysicalDeviceFeatures requiredDeviceFeatures, const std::vector<const char*>& requiredExtensions, const std::vector<const char*>& requiredLayers, VkSurfaceKHR surface) {
 	this->selectedQueueFamilies = { UINT32_MAX, UINT32_MAX, UINT32_MAX };
 
 	for (const auto& physicalDevice : phyDevs) {
@@ -115,6 +65,7 @@ bool QVkDevice::setupPhysicalDevice(std::vector<VkPhysicalDevice>& phyDevs, std:
 			}
 			i++;
 		}
+
 	}
 	if (!this->selectedQueueFamilies.graphicsQueueFamilyIndex.has_value()) {
 		return false;
@@ -123,29 +74,32 @@ bool QVkDevice::setupPhysicalDevice(std::vector<VkPhysicalDevice>& phyDevs, std:
 		<< "Compute " << selectedQueueFamilies.computeQueueFamiliyIndex.value() << std::endl
 		<< "Transfer " << selectedQueueFamilies.transferQueueFamiliyIndex.value() << std::endl;
 	return true;
-}
+}*/
 
-static void countPerQueueFailiyindices(std::map<uint32_t, uint32_t> &queueFamilies, uint32_t queueFamiliindex) {
-	auto queueFamilyIndex = queueFamilies.find(queueFamiliindex);
+static void countPerQueueFailiyindices(std::map<uint32_t, uint32_t> &queueFamilies, uint32_t queueFamilyindex) {
+	auto queueFamilyIndex = queueFamilies.find(queueFamilyindex);
 	if (queueFamilyIndex == queueFamilies.end()) {
-		queueFamilies.insert(std::pair(queueFamiliindex, (uint32_t)1));
+		queueFamilies.insert(std::pair(queueFamilyindex, (uint32_t)1));
 	}
 	else {
 		queueFamilyIndex->second++;
 	}
 }
 
-VkResult QVkDevice::createDevice() {
+VkResult QVkDevice::createDevice(VkInstance instance, VkPhysicalDevice physicalDevice, VkPhysicalDeviceFeatures requiredDeviceFeatures, const std::vector<const char*>& requiredExtensions, const std::vector<const char*>& requiredLayers, const std::vector<uint32_t>& queueFamilyIndices, std::vector<QVkDeviceQueue*>& deviceQueues) {
+	this->instance = instance;
+	this->physicalDevice = physicalDevice;
+	this->deviceFeatures = requiredDeviceFeatures;
+	this->deviceExtensions = requiredExtensions;
+	this->deviceLayers = requiredLayers;
+	
 	std::vector<VkDeviceQueueCreateInfo> queueInfos;
 	std::map<uint32_t, uint32_t> queueFamilies;
 	std::vector<float> priorities;
 	
-	if (selectedQueueFamilies.graphicsQueueFamilyIndex.has_value())
-		countPerQueueFailiyindices(queueFamilies, selectedQueueFamilies.graphicsQueueFamilyIndex.value());
-	if(selectedQueueFamilies.computeQueueFamiliyIndex.has_value())
-		countPerQueueFailiyindices(queueFamilies, selectedQueueFamilies.computeQueueFamiliyIndex.value());
-	if (selectedQueueFamilies.transferQueueFamiliyIndex.has_value())
-		countPerQueueFailiyindices(queueFamilies, selectedQueueFamilies.transferQueueFamiliyIndex.value());
+	for (auto queueFamilyIndex : queueFamilyIndices) {
+		countPerQueueFailiyindices(queueFamilies, queueFamilyIndex);
+	}
 
 	for (auto queueFamilyIndexCount : queueFamilies) {
 		VkDeviceQueueCreateInfo queueCreateInfo = {};
@@ -173,18 +127,32 @@ VkResult QVkDevice::createDevice() {
 		throw std::runtime_error("create logical device failed.");
 	}
 
-	vkGetDeviceQueue(device, selectedQueueFamilies.graphicsQueueFamilyIndex.value(), 0, &graphicsQueue);
-	if(selectedQueueFamilies.computeQueueFamiliyIndex.has_value())
-		vkGetDeviceQueue(device, selectedQueueFamilies.computeQueueFamiliyIndex.value(), 0, &computeQueue);
-	if(selectedQueueFamilies.transferQueueFamiliyIndex.has_value())
-		vkGetDeviceQueue(device, selectedQueueFamilies.transferQueueFamiliyIndex.value(), 0, &transferQueue);
-
+	for (auto queueFamilyIndex = queueFamilyIndices.begin(); queueFamilyIndex != queueFamilyIndices.end(); queueFamilyIndex++) {
+		VkQueue queue;
+		vkGetDeviceQueue(device, *queueFamilyIndex, 0, &queue);
+		QVkDeviceQueue* pQueue = new QVkDeviceQueue(this, queue, *queueFamilyIndex);
+		deviceQueues.push_back(pQueue);
+	}
 	return VK_SUCCESS;
 }
 
 void QVkDevice::destroyDevice() {
+	while(this->deviceDependents.size()>0) {
+		auto iter = deviceDependents.begin();
+		QVkDeviceDependent* pDependent = *iter;
+		pDependent->destroy();
+		delete pDependent;
+	}
 	if (this->device != nullptr) {
 		vkDeviceWaitIdle(this->device);
 		vkDestroyDevice(this->device, nullptr);
 	}
+}
+
+void QVkDevice::registerDeviceDependent(QVkDeviceDependent* pDependent){
+	this->deviceDependents.insert(pDependent);
+}
+
+void QVkDevice::unregisterDeviceDependent(QVkDeviceDependent* pDependent) {
+	this->deviceDependents.erase(pDependent);
 }

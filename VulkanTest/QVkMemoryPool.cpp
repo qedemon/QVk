@@ -2,12 +2,17 @@
 
 using namespace QVk;
 
-QVkMemoryPool::QVkMemoryPool(VkDevice logicalDevice, VkPhysicalDevice physicalDevice) : logicalDevice(logicalDevice), physicalDevice(physicalDevice) {
+QVkMemoryPool::QVkMemoryPool(QVkDevice* pDevice) : QVkDeviceDependent(pDevice) {
 
 }
 
-QVkMemoryPool::~QVkMemoryPool() {
-	for (auto pMemoryManager : memoryManagers) {
-		delete pMemoryManager;
+void QVkMemoryPool::destroyVkResource() {
+	for (auto manager : memoryManagers) {
+		manager->destroy();
 	}
+	memoryManagers.clear();
+}
+
+std::string QVkMemoryPool::getTypeName() {
+	return "Memory Pool";
 }

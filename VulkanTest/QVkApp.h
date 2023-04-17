@@ -6,6 +6,7 @@
 #include <GLFW/glfw3native.h>
 #include <vector>
 #include "QVkDevice.h"
+#include "QVkRenderQueueList.h"
 #include "QVkMemoryManager.h"
 
 namespace QVk {
@@ -31,7 +32,8 @@ namespace QVk {
 		std::vector<VkPhysicalDeviceProperties> physicalDeviceProperties;
 		
 		QVkDevice device;
-		QVkMemoryManager* pDeviceMemory;
+		VkSurfaceKHR surface;
+		QVkRenderQueueList renderQueueList;
 
 	private:
 		bool initWindow();
@@ -41,6 +43,8 @@ namespace QVk {
 		std::vector<const char*> getRequiredExtensions();
 		VkResult createInstance();
 		void setupDebugMessenger();
+		void createSurface();
+		bool pickPhysicalDeviceAndQueueFamilies(VkPhysicalDeviceFeatures requiredDeviceFeatures, const std::vector<const char*>& requiredExtensions, const std::vector<const char*>& requiredLayers, VkSurfaceKHR surface, VkPhysicalDevice* pPhysicalDeviceOut, QVkRenderQueueFamilyIndexList* pRenderQueueFamilyIndexListOut);
 		void cleanupVulkan();
 	public:
 		QVkApp();

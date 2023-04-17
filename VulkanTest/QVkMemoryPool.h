@@ -1,15 +1,16 @@
 #pragma once
 #include "QVkMemoryManager.h"
 namespace QVk {
-	class QVkMemoryPool
+	class QVkMemoryPool :QVkDeviceDependent
 	{
 	private:
-		VkDevice logicalDevice;
-		VkPhysicalDevice physicalDevice;
 		std::vector<QVkMemoryManager*> memoryManagers;
+	protected:
+		void destroyVkResource();
+		QVkMemoryPool(QVkDevice* pDevice);
 	public:
-		QVkMemoryPool(VkDevice logicalDevice, VkPhysicalDevice physicalDevice);
-		~QVkMemoryPool();
+		std::string getTypeName();
+		friend class QVkDevice;
 	};
 }
 

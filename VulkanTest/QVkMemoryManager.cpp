@@ -1,9 +1,10 @@
 #include "QVkMemoryManager.h"
+#include "QVkDevice.h"
 
 using namespace QVk;
 
-QVkMemoryManager::QVkMemoryManager(VkDevice logicalDevice, VkPhysicalDevice physicalDevice, uint32_t memoryTypeIndex) : 
-	physicalDevice(physicalDevice), logicalDevice(logicalDevice), deviceMemory(logicalDevice, physicalDevice)
+QVkMemoryManager::QVkMemoryManager(QVkDevice* pDevice, uint32_t memoryTypeIndex) : 
+	QVkDeviceDependent(pDevice), deviceMemory(pDevice->getLogicalDevice(), pDevice->getPhysicalDevice())
 {
 	if (deviceMemory.allocateMemory(memoryTypeIndex, DEVICE_MEMORY_SIZE) != VK_SUCCESS) {
 		throw std::exception("QVkMemory allocation error.");
@@ -38,6 +39,7 @@ QVkMemoryManager::QVkMemoryManager(VkDevice logicalDevice, VkPhysicalDevice phys
 }
 
 QVkMemoryManager::~QVkMemoryManager() {
+	this->destroy();
 }
 
 VkDeviceSize QVkMemoryManager::allocateMemory(VkDeviceSize allocateSize) {
@@ -176,4 +178,12 @@ void QVkMemoryManager::__freeBlock(MEMORY_BLOCK_INDEX blockOffset) {
 			break;
 		}
 	}
+}
+
+void QVkMemoryManager::destroyVkResource() {
+	this->deviceMemory.freeMemory();
+}
+
+std::string QVkMemoryManager::getTypeName() {
+	return "Memory";
 }

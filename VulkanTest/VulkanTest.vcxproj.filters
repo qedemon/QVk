@@ -36,6 +36,21 @@
     <ClCompile Include="QVkBackedByMemory.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="QVkDeviceDependent.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="QVkDeviceQueue.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="QVkRenderQueueList.h">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="QVkDeviceCreate.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="QVkDeviceDependentList.h">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppInfo.h">
@@ -57,6 +72,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="QVkBackedByMemory.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="QVkDeviceDependent.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="QVkDeviceQueue.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
