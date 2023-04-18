@@ -2,8 +2,8 @@
 
 using namespace QVk;
 
-QVkBackedByMemory::QVkBackedByMemory(QVkMemory* pBackMemory, VkDeviceSize offset, VkDeviceSize size, bool mappable) :
-	pBackMemory(pBackMemory), offset(offset), size(size), mappable(mappable) {
+QVkBackedByMemory::QVkBackedByMemory(QVkDevice* pDevice, QVkMemory* pBackMemory, VkDeviceSize offset, VkDeviceSize size, bool mappable) :
+	QVkDeviceDependent(pDevice), pBackMemory(pBackMemory), offset(offset), size(size), mappable(mappable) {
 
 }
 

@@ -16,6 +16,7 @@ namespace QVk {
 		uint32_t blockLevel;
 		std::vector<uint8_t> bitMasks;
 		std::vector<uint32_t> wordOffsetsPerLevel;
+		uint32_t memoryIndex;
 		QVkMemory deviceMemory;
 	private:
 		void setBit(uint32_t level, MEMORY_BLOCK_INDEX index);
@@ -28,8 +29,9 @@ namespace QVk {
 		QVkMemoryManager(QVkDevice* pDevice, uint32_t memoryIndex);
 		~QVkMemoryManager();
 	public:
+		uint32_t getMemoryType();
 		VkDeviceSize allocateMemory(VkDeviceSize allocateSize);
-		VkDeviceSize allocateAlignedMemory(VkDeviceSize allocateSize, uint32_t align);
+		VkDeviceSize allocateAlignedMemory(VkDeviceSize allocateSize, VkDeviceSize align);
 		void freeMemory(VkDeviceSize memoryOffset);
 
 		std::string getTypeName();

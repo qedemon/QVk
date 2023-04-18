@@ -4,6 +4,7 @@ namespace QVk {
 	class QVkMemoryPool :QVkDeviceDependent
 	{
 	private:
+		VkPhysicalDeviceMemoryProperties memoryProperties;
 		std::vector<QVkMemoryManager*> memoryManagers;
 	protected:
 		void destroyVkResource();
@@ -11,6 +12,8 @@ namespace QVk {
 	public:
 		std::string getTypeName();
 		friend class QVkDevice;
+	public:
+		VkDeviceSize allocateMemory(uint32_t allowedMemoryTypes, VkMemoryPropertyFlags preferedProperty, VkDeviceSize size, VkDeviceSize alignment);
 	};
 }
 

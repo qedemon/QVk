@@ -4,11 +4,11 @@
 using namespace QVk;
 
 QVkMemoryManager::QVkMemoryManager(QVkDevice* pDevice, uint32_t memoryTypeIndex) : 
-	QVkDeviceDependent(pDevice), deviceMemory(pDevice->getLogicalDevice(), pDevice->getPhysicalDevice())
-{
+	QVkDeviceDependent(pDevice), deviceMemory(pDevice->getLogicalDevice(), pDevice->getPhysicalDevice()){
 	if (deviceMemory.allocateMemory(memoryTypeIndex, DEVICE_MEMORY_SIZE) != VK_SUCCESS) {
 		throw std::exception("QVkMemory allocation error.");
 	}
+	this->memoryIndex = memoryIndex;
 
 	this->allocatedSize = DEVICE_MEMORY_SIZE;
 	this->minBlockSize = DEVICE_MEMORY_BLOCK_SIZE;
@@ -42,6 +42,10 @@ QVkMemoryManager::~QVkMemoryManager() {
 	this->destroy();
 }
 
+uint32_t QVkMemoryManager::getMemoryType() {
+	return this->memoryIndex;
+}
+
 VkDeviceSize QVkMemoryManager::allocateMemory(VkDeviceSize allocateSize) {
 	if (allocateSize > maxBlockSize) {
 		throw std::exception("QVkMemoryManager::allocateMemory error : allocateSize > maxBlock Size");
@@ -58,7 +62,7 @@ VkDeviceSize QVkMemoryManager::allocateMemory(VkDeviceSize allocateSize) {
 	return blockIndex*minBlockSize;
 }
 
-VkDeviceSize QVkMemoryManager::allocateAlignedMemory(VkDeviceSize allocateSize, uint32_t align) {
+VkDeviceSize QVkMemoryManager::allocateAlignedMemory(VkDeviceSize allocateSize, VkDeviceSize align) {
 	if (allocateSize > maxBlockSize) {
 		throw std::exception("QVkMemoryManager::allocateAlignedMemory error : allocateSize > maxBlock Size");
 	}

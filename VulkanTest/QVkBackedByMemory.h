@@ -1,14 +1,15 @@
 #pragma once
 #include "QVkMemory.h"
+#include "QVkDeviceDependent.h"
 namespace QVk {
-	class QVkBackedByMemory
+	class QVkBackedByMemory : public QVkDeviceDependent
 	{
 	protected:
 		QVkMemory* pBackMemory;
 		bool mappable;
 		VkDeviceSize offset, size;
 	protected:
-		QVkBackedByMemory(QVkMemory* pBackMemory, VkDeviceSize offset, VkDeviceSize size, bool mappable);
+		QVkBackedByMemory(QVkDevice* pDevice, QVkMemory* pBackMemory, VkDeviceSize offset, VkDeviceSize size, bool mappable);
 		void* map();
 		void unmap();
 	};
