@@ -17,11 +17,7 @@ namespace QVk {
 		VkInstance instance;
 		VkDevice device;
 		VkPhysicalDevice physicalDevice;
-		//QVkQueueFamilies selectedQueueFamilies;
 
-		//VkQueue graphicsQueue;
-		//VkQueue computeQueue;
-		//VkQueue transferQueue;
 		void registerDeviceDependent(QVkDeviceDependent* pDependent);
 		void unregisterDeviceDependent(QVkDeviceDependent* pDependent);
 		friend class QVkDeviceDependent;
