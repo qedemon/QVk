@@ -13,10 +13,11 @@ namespace QVk {
 		std::vector<const char*> deviceExtensions;
 		std::vector<const char*> deviceLayers;
 		std::set<QVkDeviceDependent*> deviceDependents;
-		
-		VkInstance instance;
-		VkDevice device;
-		VkPhysicalDevice physicalDevice;
+		QVkMemoryPool* pMemoryPool=nullptr;
+
+		VkInstance instance=VK_NULL_HANDLE;
+		VkDevice device=VK_NULL_HANDLE;
+		VkPhysicalDevice physicalDevice=VK_NULL_HANDLE;
 
 		void registerDeviceDependent(QVkDeviceDependent* pDependent);
 		void unregisterDeviceDependent(QVkDeviceDependent* pDependent);

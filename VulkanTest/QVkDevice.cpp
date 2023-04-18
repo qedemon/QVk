@@ -5,9 +5,6 @@
 using namespace QVk;
 
 QVkDevice::QVkDevice() {
-	this->instance = VK_NULL_HANDLE;
-	this->device = VK_NULL_HANDLE;
-	this->physicalDevice = VK_NULL_HANDLE;
 	this->deviceFeatures = {};
 }
 
@@ -68,10 +65,14 @@ VkResult QVkDevice::createDevice(VkInstance instance, VkPhysicalDevice physicalD
 		QVkDeviceQueue* pQueue = new QVkDeviceQueue(this, queue, *queueFamilyIndex);
 		deviceQueues.push_back(pQueue);
 	}
+
+	this->pMemoryPool=createMemoryPool();
+
 	return VK_SUCCESS;
 }
 
 void QVkDevice::destroyDevice() {
+
 	while(this->deviceDependents.size()>0) {
 		auto iter = deviceDependents.begin();
 		QVkDeviceDependent* pDependent = *iter;
