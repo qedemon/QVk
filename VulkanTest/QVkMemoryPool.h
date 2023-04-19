@@ -13,7 +13,8 @@ namespace QVk {
 		std::string getTypeName();
 		friend class QVkDevice;
 	public:
-		VkDeviceSize allocateMemory(uint32_t allowedMemoryTypes, VkMemoryPropertyFlags preferedProperty, VkDeviceSize size, VkDeviceSize alignment);
+		VkDeviceSize allocateMemory(uint32_t memoryType, VkDeviceSize size, VkDeviceSize alignment);
+		VkDeviceSize allocateMemory(uint32_t allowedMemoryTypes, VkMemoryPropertyFlags preferedProperty, VkMemoryPropertyFlags requiredProperty, VkDeviceSize size, VkDeviceSize alignment);
 	};
 }
 

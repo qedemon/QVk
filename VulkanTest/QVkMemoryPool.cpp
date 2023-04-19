@@ -18,7 +18,21 @@ std::string QVkMemoryPool::getTypeName() {
 	return "Memory Pool";
 }
 
-VkDeviceSize QVkMemoryPool::allocateMemory(uint32_t allowedMemoryTypes, VkMemoryPropertyFlags preferedProperty, VkDeviceSize size, VkDeviceSize alignment) {
+VkDeviceSize QVkMemoryPool::allocateMemory(uint32_t memoryType, VkDeviceSize size, VkDeviceSize alignment) {
+	std::optional<QVkMemoryManager*> selectedMemory;
+	for (auto memory : memoryManagers) {
+		if (memory->getMemoryType() == memoryType) {
+			selectedMemory = memory;
+		}
+	}
+	if (!selectedMemory.has_value()) {
+		selectedMemory = this->pDevice->createMemory(memoryType);
+		memoryManagers.push_back(selectedMemory.value());
+	}
+	return selectedMemory.value()->allocateAlignedMemory(size, alignment);
+}
+
+VkDeviceSize QVkMemoryPool::allocateMemory(uint32_t allowedMemoryTypes, VkMemoryPropertyFlags preferedProperty, VkMemoryPropertyFlags requiredProperty, VkDeviceSize size, VkDeviceSize alignment) {
 	std::optional<uint32_t> selectedMemoryType;
 	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
 		if ((allowedMemoryTypes >> i) & 1) {
@@ -31,23 +45,14 @@ VkDeviceSize QVkMemoryPool::allocateMemory(uint32_t allowedMemoryTypes, VkMemory
 	if (!selectedMemoryType.has_value()) {
 		for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
 			if ((allowedMemoryTypes >> i) & 1) {
-				break;
+				if ((memoryProperties.memoryTypes[i].propertyFlags & requiredProperty) == requiredProperty) {
+					break;
+				}
 			}
 		}
 	}
 	if (!selectedMemoryType.has_value()) {
 		throw std::exception("QVkMemoryPool::allocateMemory error : cannot find proper memory type");
 	}
-
-	std::optional<QVkMemoryManager*> selectedMemory;
-	for (auto memory : memoryManagers) {
-		if (memory->getMemoryType() == selectedMemoryType) {
-			selectedMemory = memory;
-		}
-	}
-	if (!selectedMemory.has_value()) {
-		selectedMemory = this->pDevice->createMemory(selectedMemoryType.value());
-		memoryManagers.push_back(selectedMemory.value());
-	}
-	return selectedMemory.value()->allocateAlignedMemory(size, alignment);
+	return allocateMemory(selectedMemoryType.value(), size, alignment);
 }

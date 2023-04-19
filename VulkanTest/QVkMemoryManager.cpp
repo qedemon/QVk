@@ -191,3 +191,11 @@ void QVkMemoryManager::destroyVkResource() {
 std::string QVkMemoryManager::getTypeName() {
 	return "Memory";
 }
+
+void* QVkMemoryManager::mapMemory(VkDeviceSize offset, VkDeviceSize size) {
+	return deviceMemory.mapMemory(offset, size);
+}
+
+void QVkMemoryManager::unmapMemory() {
+	deviceMemory.unmapMemory();
+}

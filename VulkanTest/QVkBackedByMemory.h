@@ -1,16 +1,21 @@
 #pragma once
-#include "QVkMemory.h"
+#include "QVkMemoryManager.h"
 #include "QVkDeviceDependent.h"
 namespace QVk {
 	class QVkBackedByMemory : public QVkDeviceDependent
 	{
 	protected:
-		QVkMemory* pBackMemory;
+		QVkMemoryManager* pBackMemory;
 		bool mappable;
-		VkDeviceSize offset, size;
+		std::optional<VkDeviceSize> offset, size;
+	private:
+		virtual bool _bindVkMemory(QVkMemoryManager* pBackMemory, VkDeviceSize offset) = 0;
 	protected:
-		QVkBackedByMemory(QVkDevice* pDevice, QVkMemory* pBackMemory, VkDeviceSize offset, VkDeviceSize size, bool mappable);
-		void* map();
+		QVkBackedByMemory(QVkDevice* pDevice);
+		bool bindMemory(QVkMemoryManager* pBackMemory, VkDeviceSize offset, VkDeviceSize size, bool mappable);
+	public:
+		virtual void getMemoryRequirement(VkMemoryRequirements* pMemoryRequirement) = 0;
+		void* map(VkDeviceSize offset, VkDeviceSize size);
 		void unmap();
 	};
 }

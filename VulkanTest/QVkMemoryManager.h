@@ -33,6 +33,8 @@ namespace QVk {
 		VkDeviceSize allocateMemory(VkDeviceSize allocateSize);
 		VkDeviceSize allocateAlignedMemory(VkDeviceSize allocateSize, VkDeviceSize align);
 		void freeMemory(VkDeviceSize memoryOffset);
+		void* mapMemory(VkDeviceSize offset, VkDeviceSize size);
+		void unmapMemory();
 
 		std::string getTypeName();
 

@@ -136,6 +136,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="QVkApp.cpp" />
     <ClCompile Include="QVkBackedByMemory.cpp" />
+    <ClCompile Include="QVkBuffer.cpp" />
     <ClCompile Include="QVkDeviceCreate.cpp" />
     <ClCompile Include="QVkDeviceDependent.cpp" />
     <ClCompile Include="QVkDeviceDependentList.h" />
@@ -147,6 +148,7 @@
     <ClInclude Include="QVkApp.h" />
     <ClCompile Include="QVkDevice.cpp" />
     <ClInclude Include="QVkBackedByMemory.h" />
+    <ClInclude Include="QVkBuffer.h" />
     <ClInclude Include="QVkDeviceDependent.h" />
     <ClInclude Include="QVkDeviceQueue.h" />
     <ClInclude Include="QVkMemory.h" />

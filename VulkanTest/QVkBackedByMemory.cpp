@@ -2,18 +2,27 @@
 
 using namespace QVk;
 
-QVkBackedByMemory::QVkBackedByMemory(QVkDevice* pDevice, QVkMemory* pBackMemory, VkDeviceSize offset, VkDeviceSize size, bool mappable) :
-	QVkDeviceDependent(pDevice), pBackMemory(pBackMemory), offset(offset), size(size), mappable(mappable) {
-
+QVkBackedByMemory::QVkBackedByMemory(QVkDevice* pDevice) : QVkDeviceDependent(pDevice) {
+	pBackMemory = nullptr;
+	mappable = false;
 }
 
-void* QVkBackedByMemory::map() {
+
+bool QVkBackedByMemory::bindMemory(QVkMemoryManager* pBackMemory, VkDeviceSize offset, VkDeviceSize size, bool mappable) {
+	this->pBackMemory = pBackMemory;
+	this->offset = offset;
+	this->size = size;
+	this->mappable = mappable;
+	return this->_bindVkMemory(pBackMemory, offset);
+}
+
+void* QVkBackedByMemory::map(VkDeviceSize offset, VkDeviceSize Size) {
 	if (!this->mappable) {
 		throw std::exception("QVkBackedMemory::map error : this is not mappable");
 	}
-	return this->pBackMemory->mapMemory(offset, size);
+	return this->pBackMemory->mapMemory(offset+this->offset.value(), this->size.value());
 }
 
 void QVkBackedByMemory::unmap() {
-	return this->pBackMemory->unmapMemory();
+	this->pBackMemory->unmapMemory();
 }
