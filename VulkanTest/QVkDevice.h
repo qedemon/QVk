@@ -32,5 +32,6 @@ namespace QVk {
 	public:
 		QVkMemoryManager* createMemory(uint32_t memoryIndex);
 		QVkMemoryPool* createMemoryPool();
+		QVkBuffer* createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, bool mappable);
 	};
 }

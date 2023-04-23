@@ -18,9 +18,19 @@ QVkBuffer::QVkBuffer(QVkDevice* pDevice, VkDeviceSize size, VkBufferUsageFlags u
 	}
 }
 bool QVkBuffer::_bindVkMemory(QVkMemoryManager* pBackMemory, VkDeviceSize offset) {
-	return false;
+	this->pBackMemory = pBackMemory;
+	this->offset = offset;
+	VkResult result = vkBindBufferMemory(this->pDevice->getLogicalDevice(), this->vkBuffer, this->pBackMemory->getVkDeviceMemory(), offset);
 }
 
 void QVkBuffer::getMemoryRequirement(VkMemoryRequirements* pMemoryRequirement) {
 	vkGetBufferMemoryRequirements(pDevice->getLogicalDevice(), vkBuffer, pMemoryRequirement);
+}
+
+void QVkBuffer::destroyVkResource() {
+	
+}
+
+std::string QVkBuffer::getTypeName() {
+	return "Buffer";
 }

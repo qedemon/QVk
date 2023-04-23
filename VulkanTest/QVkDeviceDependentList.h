@@ -3,4 +3,5 @@ namespace QVk {
 	class QVkDeviceQueue;
 	class QVkMemoryManager;
 	class QVkMemoryPool;
+	class QVkBuffer;
 }
