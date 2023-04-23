@@ -10,14 +10,19 @@ QVkMemoryManager::QVkMemoryManager(QVkDevice* pDevice, uint32_t memoryTypeIndex)
 	}
 	this->memoryIndex = memoryIndex;
 
-	this->allocatedSize = DEVICE_MEMORY_SIZE;
+	this->allocatedFullSize = DEVICE_MEMORY_SIZE;
+	this->usedSize = 0;
 	this->minBlockSize = DEVICE_MEMORY_BLOCK_SIZE;
-	MEMORY_BLOCK_INDEX minBlockCount = allocatedSize / minBlockSize-((allocatedSize%minBlockSize==0)?0:1);
+	MEMORY_BLOCK_INDEX minBlockCount = allocatedFullSize / minBlockSize-((allocatedFullSize%minBlockSize==0)?0:1);
+	this->memoryBlocksLevels.resize(minBlockCount);
+	for (auto memoryBlocksLevel : memoryBlocksLevels) {
+		memoryBlocksLevel = -1;
+	}
 	for (blockLevel = 0; (minBlockCount >> blockLevel) != 0; blockLevel++);
 	this->maxBlockSize = minBlockSize << (blockLevel - 1);
 	uint32_t totalWordCount = 0;
 	MEMORY_BLOCK_INDEX blockCount = minBlockCount;
-	for (uint32_t level = 0; level < blockLevel; level++) {
+	for (MEMORY_BLOCK_LEVEL level = 0; level < blockLevel; level++) {
 		wordOffsetsPerLevel.push_back(totalWordCount);
 		totalWordCount += blockCount / sizeof(decltype(bitMasks.front())) / 8 + ((blockCount % (sizeof(decltype(bitMasks.front())) * 8) > 0) ? 1 : 0);
 		blockCount >>= 1;
@@ -50,8 +55,8 @@ VkDeviceSize QVkMemoryManager::allocateMemory(VkDeviceSize allocateSize) {
 	if (allocateSize > maxBlockSize) {
 		throw std::exception("QVkMemoryManager::allocateMemory error : allocateSize > maxBlock Size");
 	}
-	uint32_t level;
-	for (level = 0; allocateSize > (minBlockSize << (size_t)level); level++);
+	MEMORY_BLOCK_LEVEL level;
+	for (level = 0; allocateSize > (minBlockSize << level); level++);
 	uint32_t blockIndex;
 	try {
 		blockIndex = __allocateBlock(level);
@@ -66,7 +71,7 @@ VkDeviceSize QVkMemoryManager::allocateAlignedMemory(VkDeviceSize allocateSize, 
 	if (allocateSize > maxBlockSize) {
 		throw std::exception("QVkMemoryManager::allocateAlignedMemory error : allocateSize > maxBlock Size");
 	}
-	uint32_t level;
+	MEMORY_BLOCK_LEVEL level;
 	level = 0;
 	while (level < blockLevel) {
 		uint32_t blockSize = minBlockSize << level;
@@ -97,28 +102,28 @@ void QVkMemoryManager::freeMemory(VkDeviceSize memoryOffset) {
 	__freeBlock(blockOffset);
 }
 
-void QVkMemoryManager::setBit(uint32_t level, MEMORY_BLOCK_INDEX index) {
+void QVkMemoryManager::setBit(MEMORY_BLOCK_LEVEL level, MEMORY_BLOCK_INDEX index) {
 	const uint32_t WORD_SIZE = sizeof(decltype(bitMasks.front())) * 8;
 	uint32_t wordOffset = index / WORD_SIZE;
 	uint32_t bitOffset = index % WORD_SIZE;
 	bitMasks[wordOffsetsPerLevel[level] + wordOffset] |= (1 << bitOffset);
 }
 
-void QVkMemoryManager::resetBit(uint32_t level, MEMORY_BLOCK_INDEX index) {
+void QVkMemoryManager::resetBit(MEMORY_BLOCK_LEVEL level, MEMORY_BLOCK_INDEX index) {
 	const uint32_t WORD_SIZE = sizeof(decltype(bitMasks.front())) * 8;
 	uint32_t wordOffset = index / WORD_SIZE;
 	uint32_t bitOffset = index % WORD_SIZE;
 	bitMasks[wordOffsetsPerLevel[level] + wordOffset] &= ~(1 << bitOffset);
 }
 
-bool QVkMemoryManager::getBit(uint32_t level, MEMORY_BLOCK_INDEX index) {
+bool QVkMemoryManager::getBit(MEMORY_BLOCK_LEVEL level, MEMORY_BLOCK_INDEX index) {
 	const uint32_t WORD_SIZE = sizeof(decltype(bitMasks.front())) * 8;
 	uint32_t wordOffset = index / WORD_SIZE;
 	uint32_t bitOffset = index % WORD_SIZE;
 	return (bitMasks[wordOffsetsPerLevel[level] + wordOffset] >> bitOffset) & 1;
 }
 
-MEMORY_BLOCK_INDEX QVkMemoryManager::__allocateBlock(uint32_t level) {
+MEMORY_BLOCK_INDEX QVkMemoryManager::__allocateBlock(MEMORY_BLOCK_LEVEL level) {
 
 	uint32_t selectedBlockIndex;
 	if (level == blockLevel - 1) {
@@ -127,7 +132,7 @@ MEMORY_BLOCK_INDEX QVkMemoryManager::__allocateBlock(uint32_t level) {
 		}
 		selectedBlockIndex = 0;
 	}
-	uint32_t currentLevel;
+	MEMORY_BLOCK_LEVEL currentLevel;
 	MEMORY_BLOCK_INDEX offset = 0;
 	for (currentLevel = level; currentLevel < blockLevel; currentLevel++) {
 		bool found = false;
@@ -156,7 +161,12 @@ MEMORY_BLOCK_INDEX QVkMemoryManager::__allocateBlock(uint32_t level) {
 		setBit(currentLevel, offset + 1);
 	}
 	resetBit(currentLevel, offset);
-	return (((MEMORY_BLOCK_INDEX)1 << level) + offset);
+	usedSize += (minBlockSize << level);
+	MEMORY_BLOCK_INDEX blockOffset = (((MEMORY_BLOCK_INDEX)1 << level) + offset);
+	for (MEMORY_BLOCK_INDEX i = blockOffset; i < blockOffset + (1 << level); i++) {
+		memoryBlocksLevels[i] = level;
+	}
+	return blockOffset;
 }
 
 void QVkMemoryManager::__freeBlock(MEMORY_BLOCK_INDEX blockOffset) {
