@@ -18,7 +18,7 @@ std::string QVkMemoryPool::getTypeName() {
 	return "Memory Pool";
 }
 
-VkDeviceSize QVkMemoryPool::allocateMemory(uint32_t memoryType, VkDeviceSize size, VkDeviceSize alignment) {
+QVkDeviceMemoryAllocation QVkMemoryPool::allocateMemory(uint32_t memoryType, VkDeviceSize size, VkDeviceSize alignment) {
 	std::optional<QVkMemoryManager*> selectedMemory;
 	for (auto memory : memoryManagers) {
 		if (memory->getMemoryType() == memoryType) {
@@ -29,10 +29,13 @@ VkDeviceSize QVkMemoryPool::allocateMemory(uint32_t memoryType, VkDeviceSize siz
 		selectedMemory = this->pDevice->createMemory(memoryType);
 		memoryManagers.push_back(selectedMemory.value());
 	}
-	return selectedMemory.value()->allocateAlignedMemory(size, alignment);
+	QVkDeviceMemoryAllocation allocation;
+	allocation.pMemory = *selectedMemory;
+	allocation.offset = selectedMemory.value()->allocateAlignedMemory(size, alignment);
+	return allocation;
 }
 
-VkDeviceSize QVkMemoryPool::allocateMemory(uint32_t allowedMemoryTypes, VkMemoryPropertyFlags preferedProperty, VkMemoryPropertyFlags requiredProperty, VkDeviceSize size, VkDeviceSize alignment) {
+QVkDeviceMemoryAllocation QVkMemoryPool::allocateMemory(uint32_t allowedMemoryTypes, VkMemoryPropertyFlags preferedProperty, VkMemoryPropertyFlags requiredProperty, VkDeviceSize size, VkDeviceSize alignment) {
 	std::optional<uint32_t> selectedMemoryType;
 	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++) {
 		if ((allowedMemoryTypes >> i) & 1) {

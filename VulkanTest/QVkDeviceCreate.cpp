@@ -23,6 +23,7 @@ QVkBuffer* QVkDevice::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, 
 		requiredProperty = requiredProperty | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 		preferedProperty = requiredProperty | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
 	}
-	pMemoryPool->allocateMemory(memoryRequirements.memoryTypeBits, preferedProperty, requiredProperty, memoryRequirements.size, memoryRequirements.alignment);
+	QVkDeviceMemoryAllocation allocation = pMemoryPool->allocateMemory(memoryRequirements.memoryTypeBits, preferedProperty, requiredProperty, memoryRequirements.size, memoryRequirements.alignment);
+	pBuffer->bindMemory(allocation.pMemory, allocation.offset, size, mappable);
 	return pBuffer;
 }
