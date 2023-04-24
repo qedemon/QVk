@@ -13,6 +13,7 @@ namespace QVk {
 	protected:
 		QVkBackedByMemory(QVkDevice* pDevice);
 		bool bindMemory(QVkMemoryManager* pBackMemory, VkDeviceSize offset, VkDeviceSize size, bool mappable);
+		VkDeviceMemory getVkDeviceMemory();
 	public:
 		virtual void getMemoryRequirement(VkMemoryRequirements* pMemoryRequirement) = 0;
 		void* map(VkDeviceSize offset, VkDeviceSize size);

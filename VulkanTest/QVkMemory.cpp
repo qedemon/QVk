@@ -128,3 +128,6 @@ bool QVkMemory::invalidateMemory(const std::vector<VkDeviceSize>& offset, const 
 	return (vkInvalidateMappedMemoryRanges(logicalDevice, static_cast<uint32_t>(mappedRanges.size()), mappedRanges.data()) == VK_SUCCESS);
 }
 
+VkDeviceMemory QVkMemory::getVkDeviceMemory() {
+	return this->deviceMemory;
+}

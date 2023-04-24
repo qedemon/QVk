@@ -26,3 +26,7 @@ void* QVkBackedByMemory::map(VkDeviceSize offset, VkDeviceSize Size) {
 void QVkBackedByMemory::unmap() {
 	this->pBackMemory->unmapMemory();
 }
+
+VkDeviceMemory QVkBackedByMemory::getVkDeviceMemory() {
+	return this->pBackMemory->getVkDeviceMemory();
+}

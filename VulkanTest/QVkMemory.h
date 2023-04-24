@@ -26,6 +26,7 @@ namespace QVk {
 		bool flushMemory(const std::vector<VkDeviceSize>& offset, const std::vector<VkDeviceSize>& size);
 		bool invalidateMemory(VkDeviceSize offset, VkDeviceSize size);
 		bool invalidateMemory(const std::vector<VkDeviceSize>& offset, const std::vector<VkDeviceSize>& size);
+		VkDeviceMemory getVkDeviceMemory();
 	};
 }
 

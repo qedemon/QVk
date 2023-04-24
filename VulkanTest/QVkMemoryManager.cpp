@@ -13,7 +13,7 @@ QVkMemoryManager::QVkMemoryManager(QVkDevice* pDevice, uint32_t memoryTypeIndex)
 	this->allocatedFullSize = DEVICE_MEMORY_SIZE;
 	this->usedSize = 0;
 	this->minBlockSize = DEVICE_MEMORY_BLOCK_SIZE;
-	MEMORY_BLOCK_INDEX minBlockCount = allocatedFullSize / minBlockSize-((allocatedFullSize%minBlockSize==0)?0:1);
+	MEMORY_BLOCK_INDEX minBlockCount = (MEMORY_BLOCK_INDEX)(allocatedFullSize / minBlockSize);// -((allocatedFullSize % minBlockSize == 0) ? 0 : 1));
 	this->memoryBlocksLevels.resize(minBlockCount);
 	for (auto memoryBlocksLevel : memoryBlocksLevels) {
 		memoryBlocksLevel = -1;
@@ -74,7 +74,7 @@ VkDeviceSize QVkMemoryManager::allocateAlignedMemory(VkDeviceSize allocateSize, 
 	MEMORY_BLOCK_LEVEL level;
 	level = 0;
 	while (level < blockLevel) {
-		uint32_t blockSize = minBlockSize << level;
+		VkDeviceSize blockSize = minBlockSize << level;
 		if ((blockSize >= allocateSize) && (blockSize >= align))
 			break;
 		level++;
@@ -213,4 +213,8 @@ void* QVkMemoryManager::mapMemory(VkDeviceSize offset, VkDeviceSize size) {
 
 void QVkMemoryManager::unmapMemory() {
 	deviceMemory.unmapMemory();
+}
+
+VkDeviceMemory QVkMemoryManager::getVkDeviceMemory() {
+	return this->deviceMemory.getVkDeviceMemory();
 }
