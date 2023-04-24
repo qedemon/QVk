@@ -39,6 +39,7 @@ namespace QVk {
 		void freeMemory(VkDeviceSize memoryOffset);
 		void* mapMemory(VkDeviceSize offset, VkDeviceSize size);
 		void unmapMemory();
+		VkDeviceSize getUsableMemorySize();
 
 		std::string getTypeName();
 

@@ -162,16 +162,18 @@ MEMORY_BLOCK_INDEX QVkMemoryManager::__allocateBlock(MEMORY_BLOCK_LEVEL level) {
 	}
 	resetBit(currentLevel, offset);
 	usedSize += (minBlockSize << level);
-	MEMORY_BLOCK_INDEX blockOffset = (((MEMORY_BLOCK_INDEX)1 << level) + offset);
-	for (MEMORY_BLOCK_INDEX i = blockOffset; i < blockOffset + (1 << level); i++) {
+	MEMORY_BLOCK_INDEX nBlockCount = 1 << level;
+	MEMORY_BLOCK_INDEX blockOffset = (nBlockCount + offset);
+	for (MEMORY_BLOCK_INDEX i = blockOffset; i < blockOffset + nBlockCount; i++) {
 		memoryBlocksLevels[i] = level;
 	}
 	return blockOffset;
 }
 
 void QVkMemoryManager::__freeBlock(MEMORY_BLOCK_INDEX blockOffset) {
-	uint32_t currentLevel = 0;
-	for (currentLevel = 0; currentLevel < blockLevel; currentLevel++) {
+	MEMORY_BLOCK_LEVEL level = memoryBlocksLevels[blockOffset];
+	blockOffset = (blockOffset >> level) << level;
+	for (MEMORY_BLOCK_LEVEL currentLevel= level; currentLevel < blockLevel; currentLevel++) {
 		if (blockOffset & 1) {
 			if (!getBit(currentLevel, blockOffset - 1)) {
 				setBit(currentLevel, blockOffset);
@@ -191,6 +193,9 @@ void QVkMemoryManager::__freeBlock(MEMORY_BLOCK_INDEX blockOffset) {
 			setBit(currentLevel, 0);
 			break;
 		}
+	}
+	for (MEMORY_BLOCK_INDEX i = blockOffset; i < blockOffset + (1 << level); i++) {
+		memoryBlocksLevels[i] = -1;
 	}
 }
 
