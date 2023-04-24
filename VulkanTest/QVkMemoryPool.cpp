@@ -22,7 +22,10 @@ QVkDeviceMemoryAllocation QVkMemoryPool::allocateMemory(uint32_t memoryType, VkD
 	std::optional<QVkMemoryManager*> selectedMemory;
 	for (auto memory : memoryManagers) {
 		if (memory->getMemoryType() == memoryType) {
-			selectedMemory = memory;
+			if (memory->getUsableMemorySize() >= size) {
+				selectedMemory = memory;
+				break;
+			}
 		}
 	}
 	if (!selectedMemory.has_value()) {
