@@ -32,6 +32,7 @@ void QVkBuffer::getMemoryRequirement(VkMemoryRequirements* pMemoryRequirement) {
 }
 
 void QVkBuffer::destroyVkResource() {
+	this->pBackMemory->freeMemory(this->offset.value());
 	vkDestroyBuffer(this->pDevice->getLogicalDevice(), vkBuffer, nullptr);
 }
 
